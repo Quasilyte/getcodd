@@ -12,15 +12,6 @@
   (close-input-port *input*)
   (set! *input* (open-input-file "getcodd-in")))
 
-;; launch input pipe listener
-(thread
- (lambda ()
-   (let loop ()
-     (match (read-line *input*)
-       [(? eof-object?) (reopen-input!)]
-       [query (thread-send *master* (cons 'request query))])
-     (loop))))
-
 (displayln "started listening")
 
 (define (query-snippet ostr query-body)
@@ -32,10 +23,8 @@
   (match params
     [(list query-type query-body)
      (match query-type
-         ;; todo: "source", "docs", "error", ...
-       ["snippet"
-        (thread (lambda ()
-                  (query-snippet ostr query-body)))]
+       ;; todo: "source", "docs", "error", ...
+       ["snippet" (query-snippet ostr query-body)]
        [_ (printf "unknown query type: `~a`\n" query-type)])]
     [_ (displayln "bad query format")]))
 
@@ -68,9 +57,8 @@
            [else (printf "unknown request type `~a`\n" request-type)])]
     [_ (displayln "malformed request")]))
 
-(let loop ()
-  (let ([sig (thread-receive)])
-    (match (car sig)
-      ['request (handle-request (cdr sig))]
-      ['job-done (printf "job done\n")])
-  (loop)))
+(let listener-loop ()
+  (match (read-line *input*)
+    [(? eof-object?) (reopen-input!)]
+    [request (handle-request request)])
+  (listener-loop))
