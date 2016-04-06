@@ -6,3 +6,8 @@ getcodd
 ```
 
 Getcodd delivers code faster than you can switch to a browser!
+
+## Platforms
+
+For now, only linux is supported.  
+Process daemonization delegated to the systemd.  

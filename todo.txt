@@ -1,0 +1,6 @@
+Targets:
+* handle simple queries like "python|snippet|read entire file"
+* text search in LXinYM
+* ranking of results
+* concurrent collection of results
+
