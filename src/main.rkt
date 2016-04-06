@@ -26,8 +26,7 @@
 (define (query-snippet ostr query-body)
   (sleep 6)
   (displayln "done-query")
-  (ostream-write ostr query-body)
-  (ostream-close ostr))
+  (ostream-write ostr query-body))
 
 (define (handle-query ostr params)
   (match params
@@ -43,17 +42,30 @@
 (define (handle-ping ostr)
   (sleep 10)
   (displayln "done-ping")
-  (ostream-write ostr "pong")
-  (ostream-close ostr))
+  (ostream-write ostr "pong"))
 
+(define (make-request-handler handler)
+  (lambda (output-path params)
+    (define ostr (make-ostream output-path))
+    (handler ostr params)
+    (ostream-close ostr)))
+
+(define *request-handlers*
+  (for/hash ([name-and-proc
+              (list (cons "query" handle-query)
+                    (cons "ping" (lambda (ostr _) (handle-ping ostr))))])
+    (let ([name (car name-and-proc)] [proc (cdr name-and-proc)])
+      (values name (make-request-handler proc)))))
+ 
 (define (handle-request request)
   (match (string-split request ";")
     [(list output-path request-type params ...)
-     (define ostr (make-ostream output-path))
-     (match request-type
-       ["query" (thread (lambda () (handle-query ostr params)))]
-       ["ping" (thread (lambda () (handle-ping ostr)))]
-       [_ (printf "unknown request type `~a`\n" request-type)])]
+     (cond [(hash-has-key? *request-handlers* request-type)
+            (define request-handler (hash-ref *request-handlers* request-type))
+            (thread
+             (lambda ()
+               (request-handler output-path params)))]
+           [else (printf "unknown request type `~a`\n" request-type)])]
     [_ (displayln "malformed request")]))
 
 (let loop ()
