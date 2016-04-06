@@ -6,7 +6,7 @@
 
 (define (make-ostream path)
   (cond [(hash-has-key? *ostreams* path)
-         (printf "re-using ostream `~a`\n" path)
+         (printf "reusing ostream `~a`\n" path)
          (define boxed-ostr (hash-ref *ostreams* path))
          (hash-set! *ostreams* path (rc-cell-increase boxed-ostr))
          (rc-cell-unbox boxed-ostr)]
