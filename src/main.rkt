@@ -3,32 +3,16 @@
 (require net/url)
 
 (require "ostream.rkt"
-         "http.rkt")
+         "query_snippet.rkt")
 
 (define *master* (current-thread))
 
 (define *input* (open-input-file "getcodd-in"))
 
-(define *request-handlers*
-  (for/hash ([name-and-proc
-              (list (cons "query" handle-query)
-                    (cons "ping" (lambda (ostr _) (handle-ping ostr))))])
-    (let ([name (car name-and-proc)] [proc (cdr name-and-proc)])
-      (values name
-              (lambda (output-path params)
-                (define ostr (make-ostream output-path))
-                (proc ostr params)
-                (ostream-close ostr))))))
-
 (define (reopen-input!)
   (displayln "reopening pipe...")
   (close-input-port *input*)
   (set! *input* (open-input-file "getcodd-in")))
-
-(define (query-snippet ostr query-body)
-  (sleep 6)
-  (displayln "done-query")
-  (ostream-write ostr query-body))
 
 (define (handle-query ostr params)
   (match params
@@ -43,7 +27,18 @@
   (sleep 10)
   (displayln "done-ping")
   (ostream-write ostr "pong"))
-              
+
+(define *request-handlers*
+  (for/hash ([name-and-proc
+              (list (cons "query" handle-query)
+                    (cons "ping" (lambda (ostr _) (handle-ping ostr))))])
+    (let ([name (car name-and-proc)] [proc (cdr name-and-proc)])
+      (values name
+              (lambda (output-path params)
+                (define ostr (make-ostream output-path))
+                (proc ostr params)
+                (ostream-close ostr))))))
+
 (define (handle-request request)
   (match (string-split request ";")
     [(list output-path request-type params ...)
