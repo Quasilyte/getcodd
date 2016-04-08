@@ -7,4 +7,10 @@
                   (curry get-pure-port #:redirections 5)
                   port->string))
 
-(provide http-get)
+(define (http-get-async url-string master)
+  (thread
+   (lambda ()
+     (thread-send master (http-get url-string)))))
+
+(provide http-get
+         http-get-async)
