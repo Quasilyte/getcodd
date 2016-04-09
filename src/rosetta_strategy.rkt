@@ -2,7 +2,8 @@
 
 (require "http.rkt"
          "strategy.rkt"
-         "storage.rkt")
+         "storage.rkt"
+         "nlp.rkt")
 
 (define page-anchors
   (let ([rx-page-haystack
@@ -39,9 +40,18 @@
              '()]
             [else anchors]))))
 
+(define (restore-url partial-url)
+  (string-append "http://rosettacode.org/" partial-url))
+
 (define (lang-url lang)
   ;; #FIXME: not working for urls with url-encoded chars (C++ -> C%2B%2B)
   (format "http://rosettacode.org/wiki/Category:~a" lang))
+
+(define (normalize-anchors anchors)
+  ;; #FIXME: better to use nlp-normalize
+  (map (lambda (anchor)
+         (cons (car anchor) (string-downcase (cdr anchor))))
+       anchors))
 
 (define (fetch-anchors lang)
   ;; #FIXME: in high concurrent env. we need an update lock or
@@ -52,10 +62,11 @@
          (storage-read storage-key)]
         [else
          (define lang-info (http-get (lang-url lang)))
-         (define anchors (page-anchors lang-info))
+         (define normalized-anchors
+           (normalize-anchors (page-anchors lang-info)))
          (printf "returning new `~a`\n" storage-key)
-         (storage-write storage-key anchors)
-         anchors]))
+         (storage-write storage-key normalized-anchors)
+         normalized-anchors]))
 
 (define (similar-enough? terms-synsets title-words)
   (cond [(= (length terms-synsets) (length title-words))
@@ -66,12 +77,41 @@
         ;; #FIXME: should try harder (check for bigrams?)
         [else #f]))
 
+(define get-code-from
+  ;; #FIXME: it grabs `output` sections as snippet
+  (let ([rx-lang-snippets #rx"<pre.*?>(.*?)</pre>"]
+        [rx-pre-tags #rx"</?pre.*?>"])
+    (lambda (lang url)
+      (let ([rx-lang-block (regexp (format "id=\"~a\".*?<h[23]>" lang))])
+        (map (lambda (snippet)
+               (regexp-replace* rx-pre-tags snippet ""))
+             (regexp-match*
+              rx-lang-snippets
+              (car (regexp-match rx-lang-block (http-get url)))))))))
+
 (define (fetcher request)
   (match-define (list lang terms) request)
   (define terms-synsets (map nlp-synonyms terms))
   (define anchors (fetch-anchors lang))
-  (length anchors))
+  (define url
+    (let seek-url ([tail anchors])
+      (cond [(null? tail) ""]
+            [else
+             (define splitted-tail (string-split (cdar tail) " "))
+             (let ([similar (similar-enough? terms-synsets splitted-tail)])
+               (if similar
+                   (caar tail)
+                   (seek-url (cdr tail))))])))
+  (if (string=? "" url)
+      ""
+      (get-code-from lang (restore-url url))))
 
+               #|
+      (cond [similar #t]
+            [else (if (null? (cdr tail))
+                      #f
+                      (seek (cdr tail)))])))) |#
+  
 (define (evaluator result)
   result)
 

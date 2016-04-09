@@ -4,11 +4,16 @@
 (require "src/strategy.rkt")
 
 (define (exec strategy)
-  (displayln ((strategy-fetcher strategy) (list "Haskell" "=)")))
+  (define results ((strategy-fetcher strategy)
+                   (list "Scheme" (list "system" "time"))))
+  (for ([result results])
+    (displayln result)
+    (newline))
   (displayln ((strategy-evaluator strategy) "sd"))
   (define formatters (strategy-formatters strategy))
   (if (hash-has-key? formatters "raw")
       (displayln "ok")
       (displayln "not ok")))
 
-(exec rosetta-strategy)
+(time
+ (exec rosetta-strategy))
