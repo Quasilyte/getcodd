@@ -16,10 +16,10 @@
 
 (define (handle-query ostr params)
   (match params
-    [(list query-type query-body)
+    [(list query-type lang query-body)
      (match query-type
        ;; todo: "source", "docs", "error", ...
-       ["snippet" (query-snippet ostr query-body)]
+       ["snippet" (query-snippet ostr lang query-body)]
        [_ (printf "unknown query type: `~a`\n" query-type)])]
     [_ (displayln "bad query format")]))
 
