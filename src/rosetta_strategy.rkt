@@ -95,15 +95,16 @@
   (define anchors (fetch-anchors lang))
   (define url
     (let seek-url ([tail anchors])
-      (cond [(null? tail) ""]
+      (cond [(null? tail) '()]
             [else
              (define splitted-tail (string-split (cdar tail) " "))
              (let ([similar (similar-enough? terms-synsets splitted-tail)])
                (if similar
                    (caar tail)
                    (seek-url (cdr tail))))])))
-  (if (string=? "" url)
-      ""
+  ;; (displayln url)
+  (if (null? url)
+      '()
       (get-code-from lang (restore-url url))))
   
 (define (evaluator result)

@@ -24,7 +24,7 @@
     [_ (displayln "bad query format")]))
 
 (define (handle-ping ostr)
-  (sleep 10)
+  (sleep 2)
   (displayln "done-ping")
   (ostream-write ostr "pong"))
 

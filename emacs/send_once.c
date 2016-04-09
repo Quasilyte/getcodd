@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   char response_buf[READ_SIZE];
   
   // make request
-  int requester = open("getcodd-in", O_WRONLY);
+  int requester = open("/home/quasilyte/CODE/GIT/getcodd/getcodd-in", O_WRONLY);
   if (-1 == requester) {
     return 2;
   }
@@ -24,6 +24,8 @@ int main(int argc, char* argv[]) {
   close(requester);
   
   // wait for response
+  // remove(file_name);
+  // mkfifo(file_name, 0666);
   int responder = open(file_name, O_RDONLY);
   if (-1 == responder) {
     return 3;
