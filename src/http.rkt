@@ -3,6 +3,7 @@
 (require net/url)
 
 (define (http-get url-string)
+  (printf "http: retrieving `~a`\n" url-string)
   (call/input-url (string->url url-string)
                   (curry get-pure-port #:redirections 5)
                   port->string))
