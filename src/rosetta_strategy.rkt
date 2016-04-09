@@ -105,12 +105,6 @@
   (if (string=? "" url)
       ""
       (get-code-from lang (restore-url url))))
-
-               #|
-      (cond [similar #t]
-            [else (if (null? (cdr tail))
-                      #f
-                      (seek (cdr tail)))])))) |#
   
 (define (evaluator result)
   result)
